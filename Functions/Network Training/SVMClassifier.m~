@@ -162,6 +162,8 @@ cd(handles.data.squeakfolder);
         accuracy=accuracy*100;
         disp(accuracy)
         
-
+    case 'Cake'
+        disp('HELLO')
+end
 
 
