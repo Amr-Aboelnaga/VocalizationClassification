@@ -106,15 +106,35 @@ switch answer
         %% Select the categories to train the neural network with
         call_categories = categories(Class);
         idx = listdlg('ListString',call_categories,'Name','Select categories for training','ListSize',[300,300]);
+        arr={};
+        indices = []
+        for i=1:length(idx)
+            member=ismember(Class,call_categories(i));
+            arr{i}=num2str(sum(member(:) == 1));
+        end
+        desiredvalues = inputdlg(call_categories(idx),...
+              'Values',[1 35],arr);        
+        for i=1:length(desiredvalues)
+            onesIndices=find(ismember(Class,call_categories(i)));
+            index = randsample(1:length(onesIndices), str2num(desiredvalues{i}));
+            onesIndices=onesIndices(index);
+            for j=1:length(onesIndices)
+                indices=[indices,onesIndices(j)];
+            end
+          
+        end
         calls_to_train_with = ismember(Class,call_categories(idx));
         X = X(:,:,:,calls_to_train_with);
-        Class = Class(calls_to_train_with);
+        trainingFeatures=trainingFeatures(indices,:);
+        Class = Class(indices);
         Class = removecats(Class);
+        disp(tabulate(Class))
         
+
         %% Train
         % Divide the data into training and validation data.
         % 90% goes to training, 10% to validation.
-        [trainInd,valInd] = dividerand(size(X,4),.80,.20);
+        [trainInd,valInd] = dividerand(size(trainingFeatures,4),.80,.20);
         TrainX = trainingFeatures(trainInd,:);
         TrainY = Class(trainInd);
         ValX = trainingFeatures(valInd,:);
@@ -123,11 +143,11 @@ switch answer
         % Augment the data by scaling and translating
 %       aug = imageDataAugmenter('RandXScale',[.90 1.10],'RandYScale',[.90 1.10],'RandXTranslation',[-20 20],'RandYTranslation',[-20 20],'RandXShear',[-9 9]);
 %       auimds = augmentedImageDatastore(imageSize,TrainX,TrainY,'DataAugmentation',aug);
-        classifier = fitcecoc(TrainX, TrainY);
+        classifier = fitcecoc(trainingFeatures, Class);
         disp('DONE TRAINING')
-        predictedLabels = predict(classifier, ValX);
+        predictedLabels = predict(classifier, trainingFeatures);
         figure('color','w')
-        [C,order] = confusionmat(predictedLabels,ValY);
+        [C,order] = confusionmat(predictedLabels,Class);
         h = heatmap(order,order,C);
         h.Title = 'Confusion Matrix';
         h.XLabel = 'Predicted class';
@@ -138,7 +158,7 @@ switch answer
         disp("TESTING ACCURACY");
         count=0;
         for i=1:length(predictedLabels)
-            if predictedLabels(i)== ValY(1)
+            if predictedLabels(i)== Class(i)
                 count=count+1;
             end
         end
