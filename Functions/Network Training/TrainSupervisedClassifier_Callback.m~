@@ -124,7 +124,8 @@ switch answer
 
         %P2=preview(auimds);
         %imshow(imtile(P2.input));
-
+        n=0
+while n==0
         layers = [
             imageInputLayer([imageSize],'Name','input','normalization','none')
 
@@ -183,7 +184,6 @@ switch answer
 
         [FileName,PathName] = uiputfile('ClassifierNet.mat','Save Network');
         save([PathName FileName],'ClassifyNet','wind','noverlap','nfft','padFreq','imageSize','layers');
-
 end
 
 end
